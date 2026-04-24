@@ -1,56 +1,15 @@
+"use client";
+
 import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
-import { Plus, Bell } from "lucide-react";
+import { Plus, Bell, RotateCcw } from "lucide-react";
+import Link from "next/link";
+import { formatDate, resetStore, useStore } from "@/lib/store";
 
-const submissions = [
-  {
-    id: "#0234",
-    item: "Baby Blanket - 2 items",
-    date: "Mar 15, 2026",
-    status: "Under AI Review",
-    tone: "bg-amber-100 text-amber-800",
-  },
-  {
-    id: "#0198",
-    item: "Cotton T-Shirt - 1 item",
-    date: "Mar 8, 2026",
-    status: "In Production",
-    tone: "bg-sky-100 text-sky-800",
-  },
-  {
-    id: "#0156",
-    item: "Denim Jacket",
-    date: "Feb 20, 2026",
-    status: "Delivered",
-    tone: "bg-success-soft text-success",
-  },
-  {
-    id: "#0102",
-    item: "Kids Sweater",
-    date: "Jan 30, 2026",
-    status: "Delivered",
-    tone: "bg-success-soft text-success",
-  },
-];
-
-const orders = [
-  {
-    name: "Memory Keepsake Bandana",
-    sub: "from Baby Blanket — $0.00 included",
-    cta: "Approve Design",
-    variant: "primary" as const,
-  },
-  {
-    name: "Cotton Pet Bed",
-    sub: "From Denim Jacket — Ready to Ship",
-    cta: "Ship It",
-    variant: "primary" as const,
-  },
-  {
-    name: "Heritage Dog Collar",
-    sub: "From Wool Scarf — Delivered",
-    cta: "Reorder",
-    variant: "outline" as const,
-  },
+const notif = [
+  { t: "Submission Updates", d: "Get notified as your item is reviewed.", on: true },
+  { t: "Order Shipped", d: "Receive shipping and delivery updates.", on: true },
+  { t: "New Products Available", d: "Alerts when new upcycled items are listed.", on: false },
+  { t: "Marketing & Promotions", d: "Deals, discounts, and seasonal campaigns.", on: false },
 ];
 
 const saved = [
@@ -60,14 +19,26 @@ const saved = [
   { name: "Wool Cat Cave", from: "$54", accent: "bg-[#D8B89B]" },
 ];
 
-const notif = [
-  { t: "Submission Updates", d: "Get notified as your item is reviewed.", on: true },
-  { t: "Order Shipped", d: "Receive shipping and delivery updates.", on: true },
-  { t: "New Products Available", d: "Alerts when new upcycled items are listed.", on: false },
-  { t: "Marketing & Promotions", d: "Deals, discounts, and seasonal campaigns.", on: false },
-];
+const STATUS_TONE: Record<string, { label: string; tone: string }> = {
+  submitted: { label: "Submitted", tone: "bg-border text-ink" },
+  received: { label: "Received", tone: "bg-sky-100 text-sky-800" },
+  ai: { label: "Under AI Review", tone: "bg-amber-100 text-amber-800" },
+  production: { label: "In Production", tone: "bg-sky-100 text-sky-800" },
+  shipped: { label: "Delivered", tone: "bg-success-soft text-success" },
+};
+
+const ORDER_LABEL: Record<string, { label: string; cta: string; variant: "primary" | "outline" }> = {
+  in_production: { label: "In Production", cta: "Approve Design", variant: "primary" },
+  ready_to_ship: { label: "Ready to Ship", cta: "Ship It", variant: "primary" },
+  shipped: { label: "Shipped", cta: "Track", variant: "outline" },
+  delivered: { label: "Delivered", cta: "Reorder", variant: "outline" },
+};
 
 export default function AccountPage() {
+  const { submissions, orders } = useStore();
+  const textileSavedKg = (submissions.length * 0.2).toFixed(1);
+  const co2Kg = (submissions.length * 0.52).toFixed(2);
+
   return (
     <>
       <section className="bg-brand text-white">
@@ -80,7 +51,7 @@ export default function AccountPage() {
               Member since Jan 2026 · Level 2 Recycler
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <Button variant="secondary" size="md">
               Edit Profile
             </Button>
@@ -92,6 +63,13 @@ export default function AccountPage() {
             >
               <Bell className="size-5" />
             </button>
+            <Button
+              size="md"
+              className="bg-white/10 hover:bg-white/20 text-white"
+              onClick={() => resetStore()}
+            >
+              <RotateCcw className="size-4" /> Reset demo data
+            </Button>
           </div>
         </div>
       </section>
@@ -99,10 +77,10 @@ export default function AccountPage() {
       <section className="bg-cream">
         <div className="max-w-[1400px] mx-auto px-6 md:px-16 py-10 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { v: "7", l: "Submissions" },
-            { v: "3", l: "Products Owned" },
-            { v: "0.8 kg", l: "Textile Saved" },
-            { v: "2.09 kg", l: "CO₂ Offset" },
+            { v: String(submissions.length), l: "Submissions" },
+            { v: String(orders.length), l: "Products Owned" },
+            { v: `${textileSavedKg} kg`, l: "Textile Saved" },
+            { v: `${co2Kg} kg`, l: "CO₂ Offset" },
           ].map((s) => (
             <Card key={s.l} className="p-5 text-center space-y-1">
               <div className="font-display text-3xl tracking-wide text-brand">
@@ -120,41 +98,75 @@ export default function AccountPage() {
             <h2 className="font-display text-3xl tracking-wide text-ink">
               My Submissions
             </h2>
-            <Button href="/recycle" size="sm" variant="outline">
+            <Button href="/customize" size="sm" variant="outline">
               <Plus className="size-4" /> New Submission
             </Button>
           </div>
           <Card className="overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-[#FCF5EB] text-ink-muted">
-                <tr>
-                  <th className="text-left px-5 py-3 font-medium">Submission ID</th>
-                  <th className="text-left px-5 py-3 font-medium">Item</th>
-                  <th className="text-left px-5 py-3 font-medium">Submitted</th>
-                  <th className="text-left px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.map((s) => (
-                  <tr key={s.id} className="border-t border-border">
-                    <td className="px-5 py-4 font-semibold text-brand">{s.id}</td>
-                    <td className="px-5 py-4">{s.item}</td>
-                    <td className="px-5 py-4 text-ink-muted">{s.date}</td>
-                    <td className="px-5 py-4">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${s.tone}`}>
-                        {s.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <a href="/tracking" className="text-brand hover:underline font-medium">
-                        View details
-                      </a>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead className="bg-[#FCF5EB] text-ink-muted">
+                  <tr>
+                    <th className="text-left px-5 py-3 font-medium">
+                      Submission ID
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium">Item</th>
+                    <th className="text-left px-5 py-3 font-medium">
+                      Submitted
+                    </th>
+                    <th className="text-left px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {submissions.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-5 py-8 text-center text-ink-muted"
+                      >
+                        No submissions yet.{" "}
+                        <Link
+                          href="/customize"
+                          className="text-brand hover:underline"
+                        >
+                          Start one →
+                        </Link>
+                      </td>
+                    </tr>
+                  )}
+                  {submissions.map((s) => {
+                    const tone = STATUS_TONE[s.stage];
+                    return (
+                      <tr key={s.id} className="border-t border-border">
+                        <td className="px-5 py-4 font-semibold text-brand">
+                          {s.id}
+                        </td>
+                        <td className="px-5 py-4">{s.item}</td>
+                        <td className="px-5 py-4 text-ink-muted">
+                          {formatDate(s.submittedAt)}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${tone.tone}`}
+                          >
+                            {tone.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <Link
+                            href="/tracking"
+                            className="text-brand hover:underline font-medium"
+                          >
+                            View details
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </div>
       </section>
@@ -164,20 +176,36 @@ export default function AccountPage() {
           <h2 className="font-display text-3xl tracking-wide text-ink">
             My Orders
           </h2>
-          <div className="grid md:grid-cols-3 gap-5">
-            {orders.map((o) => (
-              <Card key={o.name} className="overflow-hidden">
-                <CheckerBox className="aspect-[4/3] w-full rounded-none" />
-                <div className="p-5 space-y-2">
-                  <div className="font-semibold text-ink">{o.name}</div>
-                  <div className="text-xs text-ink-muted">{o.sub}</div>
-                  <Button size="sm" variant={o.variant} className="w-full justify-center mt-2">
-                    {o.cta}
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
+          {orders.length === 0 ? (
+            <Card className="p-10 text-center text-ink-muted">
+              No orders yet. Finish the customize flow to start one.
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-5">
+              {orders.map((o) => {
+                const meta = ORDER_LABEL[o.status];
+                return (
+                  <Card key={o.id} className="overflow-hidden">
+                    <CheckerBox className="aspect-[4/3] w-full rounded-none" />
+                    <div className="p-5 space-y-2">
+                      <div className="font-semibold text-ink">{o.product}</div>
+                      <div className="text-xs text-ink-muted">
+                        From {o.material} — {meta.label}
+                      </div>
+                      <Button
+                        href="/tracking"
+                        size="sm"
+                        variant={meta.variant}
+                        className="w-full justify-center mt-2"
+                      >
+                        {meta.cta}
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -189,8 +217,8 @@ export default function AccountPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {saved.map((s) => (
               <Card key={s.name} className="overflow-hidden">
-                <div className={`aspect-square ${s.accent}`}>
-                  <div className="checker-pattern w-full h-full opacity-30" />
+                <div className={`aspect-square ${s.accent} relative`}>
+                  <div className="checker-pattern absolute inset-0 opacity-30" />
                 </div>
                 <div className="p-3 space-y-0.5">
                   <div className="text-sm font-semibold text-ink">{s.name}</div>
@@ -198,43 +226,6 @@ export default function AccountPage() {
                 </div>
               </Card>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-cream">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 pb-12 space-y-4">
-          <h2 className="font-display text-3xl tracking-wide text-ink">
-            My Personal Impact
-          </h2>
-          <div className="grid md:grid-cols-3 gap-5">
-            <Card className="p-6">
-              <div className="text-sm text-ink-muted">CO₂ Saved</div>
-              <div className="font-display text-4xl tracking-wide text-brand">
-                333 g
-              </div>
-              <p className="text-sm text-ink-muted mt-2">
-                Equivalent to 1 short car ride avoided.
-              </p>
-            </Card>
-            <Card className="p-6">
-              <div className="text-sm text-ink-muted">Items Recycled</div>
-              <div className="font-display text-4xl tracking-wide text-brand">
-                4 items
-              </div>
-              <p className="text-sm text-ink-muted mt-2">
-                That&apos;s 4 closet transformations.
-              </p>
-            </Card>
-            <Card className="p-6">
-              <div className="text-sm text-ink-muted">Rank</div>
-              <div className="font-display text-4xl tracking-wide text-brand">
-                Level 2
-              </div>
-              <p className="text-sm text-ink-muted mt-2">
-                +12 points to Level 3 Champion
-              </p>
-            </Card>
           </div>
         </div>
       </section>
@@ -270,7 +261,10 @@ export default function AccountPage() {
               </h3>
               <div className="space-y-4">
                 {notif.map((n) => (
-                  <div key={n.t} className="flex items-start justify-between gap-4">
+                  <div
+                    key={n.t}
+                    className="flex items-start justify-between gap-4"
+                  >
                     <div>
                       <div className="text-sm font-medium text-ink">{n.t}</div>
                       <div className="text-xs text-ink-muted">{n.d}</div>
@@ -339,7 +333,11 @@ export default function AccountPage() {
                   Permanently remove your account and all data.
                 </p>
               </div>
-              <Button size="sm" variant="outline" className="border-brand text-brand hover:bg-brand hover:text-white">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-brand text-brand hover:bg-brand hover:text-white"
+              >
                 Delete Account
               </Button>
             </div>

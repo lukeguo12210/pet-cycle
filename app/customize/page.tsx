@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
 import {
   Upload,
@@ -10,6 +11,7 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
+import { createSubmissionAndOrder } from "@/lib/store";
 
 const steps = [
   { n: "01", label: "Submission", icon: Upload },
@@ -17,6 +19,14 @@ const steps = [
   { n: "03", label: "Recommendations", icon: Sparkles },
   { n: "04", label: "Style", icon: Palette },
   { n: "05", label: "Preview", icon: CheckCircle2 },
+];
+
+const MATERIAL_OPTIONS = [
+  "Baby Blanket",
+  "Cotton T-Shirt",
+  "Wool Scarf",
+  "Denim Jacket",
+  "Kids Sweater",
 ];
 
 const products = [
@@ -45,10 +55,41 @@ const palettes = [
   { name: "Cloud", color: "#F4E5D1" },
 ];
 
+type Confirmed = {
+  submissionId: string;
+  product: string;
+  material: string;
+  palette: string;
+  embroidery: string;
+  price: string;
+};
+
 export default function CustomizePage() {
   const [step, setStep] = useState(1);
+  const [material, setMaterial] = useState(MATERIAL_OPTIONS[0]);
+  const [petName, setPetName] = useState("Biscuit");
   const [selected, setSelected] = useState(0);
   const [palette, setPalette] = useState(0);
+  const [embroidery, setEmbroidery] = useState("Biscuit");
+  const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
+
+  function handleConfirm() {
+    const { submission } = createSubmissionAndOrder({
+      material,
+      product: products[selected].title,
+      palette: palettes[palette].name,
+      embroidery,
+      price: products[selected].price,
+    });
+    setConfirmed({
+      submissionId: submission.id,
+      product: products[selected].title,
+      material,
+      palette: palettes[palette].name,
+      embroidery,
+      price: products[selected].price,
+    });
+  }
 
   return (
     <>
@@ -56,7 +97,7 @@ export default function CustomizePage() {
         <div className="max-w-[1200px] mx-auto px-6 md:px-16 py-16 text-center space-y-4">
           <SectionTag>Customize</SectionTag>
           <h1 className="font-display text-5xl md:text-6xl tracking-wide">
-            Customize for Your Pet
+            Customize for {petName || "Your Pet"}
           </h1>
           <p className="text-white/85 max-w-xl mx-auto">
             Tell us about the clothes you&apos;d like to transform, and your
@@ -73,7 +114,7 @@ export default function CustomizePage() {
             return (
               <button
                 key={s.n}
-                onClick={() => setStep(i + 1)}
+                onClick={() => !confirmed && setStep(i + 1)}
                 className={`flex items-center gap-2 rounded-[12px] px-3 py-2 text-left ${
                   active
                     ? "bg-brand-soft border border-brand"
@@ -84,11 +125,9 @@ export default function CustomizePage() {
               >
                 <div
                   className={`size-8 rounded-full flex items-center justify-center font-semibold text-xs ${
-                    done
+                    done || active
                       ? "bg-brand text-white"
-                      : active
-                        ? "bg-brand text-white"
-                        : "bg-border text-ink-muted"
+                      : "bg-border text-ink-muted"
                   }`}
                 >
                   {s.n}
@@ -107,212 +146,222 @@ export default function CustomizePage() {
 
       <section className="bg-cream">
         <div className="max-w-[1000px] mx-auto px-6 md:px-16 py-12 space-y-8">
-          {step === 1 && (
-            <Card className="p-8 space-y-5">
-              <h2 className="font-display text-3xl tracking-wide text-ink">
-                Tell us about the clothes you&apos;d like to transform
-              </h2>
-              <div className="rounded-[12px] border-2 border-dashed border-border bg-cream p-10 text-center space-y-3">
-                <Upload className="size-10 mx-auto text-brand" />
-                <div className="font-semibold text-ink">
-                  Drop photos here or browse
-                </div>
-                <p className="text-sm text-ink-muted">
-                  JPG or PNG up to 10 MB. Best results with natural lighting.
-                </p>
-                <Button size="md" variant="secondary">
-                  Browse files
-                </Button>
-              </div>
-              <div className="flex justify-end">
-                <Button onClick={() => setStep(2)}>
-                  Continue <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {step === 2 && (
-            <Card className="p-8 space-y-6">
-              <h2 className="font-display text-3xl tracking-wide text-ink">
-                Tell Us About Your Pet
-              </h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Pet name" placeholder="Biscuit" />
-                <Field label="Species" placeholder="Dog / Cat / Other" />
-                <Field label="Breed" placeholder="Corgi" />
-                <Field label="Weight" placeholder="10 kg" />
-              </div>
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-ink">
-                  Personality
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "Playful",
-                    "Lazy",
-                    "Adventurous",
-                    "Cuddly",
-                    "Shy",
-                    "Chaotic",
-                  ].map((t) => (
-                    <button
-                      key={t}
-                      className="rounded-full px-4 py-1.5 text-sm border border-border text-ink-muted hover:border-brand hover:text-brand"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(3)}>
-                  Continue <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {step === 3 && (
-            <Card className="p-8 space-y-6">
-              <div className="flex items-baseline justify-between">
-                <h2 className="font-display text-3xl tracking-wide text-ink">
-                  AI Recommendations for Your Pet
-                </h2>
-                <span className="text-xs text-brand bg-brand-soft px-2.5 py-1 rounded-full">
-                  3 matched
-                </span>
-              </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                {products.map((p, i) => (
-                  <button
-                    key={p.title}
-                    onClick={() => setSelected(i)}
-                    className={`text-left rounded-[12px] overflow-hidden border-2 ${
-                      selected === i
-                        ? "border-brand shadow-card-strong"
-                        : "border-border"
-                    } bg-cream`}
-                  >
-                    <CheckerBox className="aspect-[4/3] w-full rounded-none" />
-                    <div className="p-4 space-y-2">
-                      <div className="font-semibold text-ink">{p.title}</div>
-                      <p className="text-xs text-ink-muted">{p.body}</p>
-                      <div className="text-sm text-brand font-medium">
-                        {p.price}
-                      </div>
+          {confirmed ? (
+            <SuccessBlock c={confirmed} />
+          ) : (
+            <>
+              {step === 1 && (
+                <Card className="p-8 space-y-5">
+                  <h2 className="font-display text-3xl tracking-wide text-ink">
+                    Tell us about the clothes you&apos;d like to transform
+                  </h2>
+                  <div className="rounded-[12px] border-2 border-dashed border-border bg-cream p-10 text-center space-y-3">
+                    <Upload className="size-10 mx-auto text-brand" />
+                    <div className="font-semibold text-ink">
+                      Drop photos here or browse
                     </div>
-                  </button>
-                ))}
-              </div>
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(2)}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(4)}>
-                  Continue <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </Card>
-          )}
+                    <p className="text-sm text-ink-muted">
+                      JPG or PNG up to 10 MB. Best results with natural lighting.
+                    </p>
+                    <Button size="md" variant="secondary">
+                      Browse files
+                    </Button>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-ink-muted uppercase tracking-wide">
+                      Material
+                    </div>
+                    <select
+                      value={material}
+                      onChange={(e) => setMaterial(e.target.value)}
+                      className="w-full rounded-[8px] border border-border px-4 py-3 bg-cream focus:outline-none focus:border-brand"
+                    >
+                      {MATERIAL_OPTIONS.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={() => setStep(2)}>
+                      Continue <ArrowRight className="size-4" />
+                    </Button>
+                  </div>
+                </Card>
+              )}
 
-          {step === 4 && (
-            <Card className="p-8 space-y-6">
-              <h2 className="font-display text-3xl tracking-wide text-ink">
-                Style Selection
-              </h2>
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-ink">
-                  Palette ({palettes[palette].name})
-                </div>
-                <div className="flex gap-3">
-                  {palettes.map((p, i) => (
-                    <button
-                      key={p.name}
-                      onClick={() => setPalette(i)}
-                      className={`size-12 rounded-full border-2 ${
-                        palette === i ? "border-brand" : "border-border"
-                      }`}
-                      style={{ backgroundColor: p.color }}
-                      aria-label={p.name}
+              {step === 2 && (
+                <Card className="p-8 space-y-6">
+                  <h2 className="font-display text-3xl tracking-wide text-ink">
+                    Tell Us About Your Pet
+                  </h2>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <Field
+                      label="Pet name"
+                      value={petName}
+                      onChange={setPetName}
                     />
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-ink">
-                  Embroidery text
-                </div>
-                <input
-                  placeholder="Biscuit"
-                  className="w-full rounded-[8px] border border-border px-4 py-3 bg-cream focus:outline-none focus:border-brand"
-                />
-              </div>
-              <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(3)}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(5)}>
-                  Continue <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {step === 5 && (
-            <div className="space-y-6">
-              <Card className="p-8 space-y-6">
-                <h2 className="font-display text-3xl tracking-wide text-ink">
-                  Preview & Checkout
-                </h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <CheckerBox className="aspect-square w-full" />
-                  <div className="space-y-3 text-sm">
-                    <Line k="Product" v={products[selected].title} />
-                    <Line k="Palette" v={palettes[palette].name} />
-                    <Line k="Embroidery" v="Biscuit" />
-                    <Line k="Material" v="Your donated Baby Blanket" />
-                    <div className="pt-4 border-t border-border" />
-                    <Line k="Craft fee" v={products[selected].price} />
-                    <Line k="Shipping" v="Free (carbon neutral)" />
-                    <div className="flex items-center justify-between pt-3">
-                      <span className="font-semibold text-ink">Total</span>
-                      <span className="font-display text-2xl text-brand">
-                        $0.00
-                      </span>
+                    <Field label="Species" placeholder="Dog / Cat / Other" />
+                    <Field label="Breed" placeholder="Corgi" />
+                    <Field label="Weight" placeholder="10 kg" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-ink">
+                      Personality
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        "Playful",
+                        "Lazy",
+                        "Adventurous",
+                        "Cuddly",
+                        "Shy",
+                        "Chaotic",
+                      ].map((t) => (
+                        <button
+                          key={t}
+                          className="rounded-full px-4 py-1.5 text-sm border border-border text-ink-muted hover:border-brand hover:text-brand"
+                        >
+                          {t}
+                        </button>
+                      ))}
                     </div>
                   </div>
-                </div>
-                <div className="flex justify-between">
-                  <Button variant="ghost" onClick={() => setStep(4)}>
-                    Back
-                  </Button>
-                  <Button size="lg">Confirm & Start Production</Button>
-                </div>
-              </Card>
+                  <div className="flex justify-between">
+                    <Button variant="ghost" onClick={() => setStep(1)}>
+                      Back
+                    </Button>
+                    <Button onClick={() => setStep(3)}>
+                      Continue <ArrowRight className="size-4" />
+                    </Button>
+                  </div>
+                </Card>
+              )}
 
-              <Card className="p-8 text-center space-y-4 bg-success-soft border-success/40">
-                <div className="size-14 rounded-full bg-success text-white mx-auto flex items-center justify-center">
-                  <CheckCircle2 className="size-7" />
-                </div>
-                <h3 className="font-display text-3xl tracking-wide text-ink">
-                  Payment Successful!
-                </h3>
-                <p className="text-ink-muted max-w-md mx-auto">
-                  You&apos;ll get updates at each production stage. Expected
-                  delivery 4–6 weeks.
-                </p>
-                <div className="flex gap-3 justify-center flex-wrap">
-                  <Button href="/tracking">Track your order</Button>
-                  <Button href="/account" variant="secondary">
-                    Back to account
-                  </Button>
-                </div>
-              </Card>
-            </div>
+              {step === 3 && (
+                <Card className="p-8 space-y-6">
+                  <div className="flex items-baseline justify-between">
+                    <h2 className="font-display text-3xl tracking-wide text-ink">
+                      AI Recommendations for {petName || "Your Pet"}
+                    </h2>
+                    <span className="text-xs text-brand bg-brand-soft px-2.5 py-1 rounded-full">
+                      3 matched
+                    </span>
+                  </div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {products.map((p, i) => (
+                      <button
+                        key={p.title}
+                        onClick={() => setSelected(i)}
+                        className={`text-left rounded-[12px] overflow-hidden border-2 ${
+                          selected === i
+                            ? "border-brand shadow-card-strong"
+                            : "border-border"
+                        } bg-cream`}
+                      >
+                        <CheckerBox className="aspect-[4/3] w-full rounded-none" />
+                        <div className="p-4 space-y-2">
+                          <div className="font-semibold text-ink">
+                            {p.title}
+                          </div>
+                          <p className="text-xs text-ink-muted">{p.body}</p>
+                          <div className="text-sm text-brand font-medium">
+                            {p.price}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between">
+                    <Button variant="ghost" onClick={() => setStep(2)}>
+                      Back
+                    </Button>
+                    <Button onClick={() => setStep(4)}>
+                      Continue <ArrowRight className="size-4" />
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {step === 4 && (
+                <Card className="p-8 space-y-6">
+                  <h2 className="font-display text-3xl tracking-wide text-ink">
+                    Style Selection
+                  </h2>
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-ink">
+                      Palette ({palettes[palette].name})
+                    </div>
+                    <div className="flex gap-3">
+                      {palettes.map((p, i) => (
+                        <button
+                          key={p.name}
+                          onClick={() => setPalette(i)}
+                          className={`size-12 rounded-full border-2 ${
+                            palette === i ? "border-brand" : "border-border"
+                          }`}
+                          style={{ backgroundColor: p.color }}
+                          aria-label={p.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-xs text-ink-muted uppercase tracking-wide">
+                      Embroidery text
+                    </div>
+                    <input
+                      value={embroidery}
+                      onChange={(e) => setEmbroidery(e.target.value)}
+                      className="w-full rounded-[8px] border border-border px-4 py-3 bg-cream focus:outline-none focus:border-brand"
+                    />
+                  </div>
+                  <div className="flex justify-between">
+                    <Button variant="ghost" onClick={() => setStep(3)}>
+                      Back
+                    </Button>
+                    <Button onClick={() => setStep(5)}>
+                      Continue <ArrowRight className="size-4" />
+                    </Button>
+                  </div>
+                </Card>
+              )}
+
+              {step === 5 && (
+                <Card className="p-8 space-y-6">
+                  <h2 className="font-display text-3xl tracking-wide text-ink">
+                    Preview & Checkout
+                  </h2>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <CheckerBox className="aspect-square w-full" />
+                    <div className="space-y-3 text-sm">
+                      <Line k="Product" v={products[selected].title} />
+                      <Line k="Palette" v={palettes[palette].name} />
+                      <Line k="Embroidery" v={embroidery || "—"} />
+                      <Line k="Material" v={`Your donated ${material}`} />
+                      <div className="pt-4 border-t border-border" />
+                      <Line k="Craft fee" v={products[selected].price} />
+                      <Line k="Shipping" v="Free (carbon neutral)" />
+                      <div className="flex items-center justify-between pt-3">
+                        <span className="font-semibold text-ink">Total</span>
+                        <span className="font-display text-2xl text-brand">
+                          $0.00
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between flex-wrap gap-3">
+                    <Button variant="ghost" onClick={() => setStep(4)}>
+                      Back
+                    </Button>
+                    <Button size="lg" onClick={handleConfirm}>
+                      Confirm & Start Production
+                    </Button>
+                  </div>
+                </Card>
+              )}
+            </>
           )}
         </div>
       </section>
@@ -320,12 +369,43 @@ export default function CustomizePage() {
   );
 }
 
+function SuccessBlock({ c }: { c: Confirmed }) {
+  return (
+    <Card className="p-10 text-center space-y-5 bg-success-soft border-success/40">
+      <div className="size-14 rounded-full bg-success text-white mx-auto flex items-center justify-center">
+        <CheckCircle2 className="size-7" />
+      </div>
+      <h3 className="font-display text-3xl tracking-wide text-ink">
+        Submission {c.submissionId} confirmed!
+      </h3>
+      <p className="text-ink-muted max-w-md mx-auto">
+        We&apos;ve logged your {c.product} made from{" "}
+        <span className="font-medium text-ink">{c.material}</span>. You&apos;ll
+        get updates at every production stage — expected delivery 4–6 weeks.
+      </p>
+      <div className="flex gap-3 justify-center flex-wrap">
+        <Button href="/tracking">Track your order</Button>
+        <Button href="/account" variant="secondary">
+          Back to account
+        </Button>
+        <Link href="/customize" className="text-sm text-ink-muted hover:text-brand self-center">
+          Start another
+        </Link>
+      </div>
+    </Card>
+  );
+}
+
 function Field({
   label,
+  value,
+  onChange,
   placeholder,
 }: {
   label: string;
-  placeholder: string;
+  value?: string;
+  onChange?: (v: string) => void;
+  placeholder?: string;
 }) {
   return (
     <div className="space-y-1">
@@ -333,6 +413,8 @@ function Field({
         {label}
       </div>
       <input
+        value={value}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         placeholder={placeholder}
         className="w-full rounded-[8px] border border-border px-4 py-3 bg-cream focus:outline-none focus:border-brand"
       />
