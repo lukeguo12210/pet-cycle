@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
 import {
@@ -10,8 +11,10 @@ import {
   Palette,
   CheckCircle2,
   ArrowRight,
+  X,
 } from "lucide-react";
 import { createSubmissionAndOrder } from "@/lib/store";
+import { fileToCompressedDataUrl } from "@/lib/image";
 
 const steps = [
   { n: "01", label: "Submission", icon: Upload },
@@ -64,6 +67,8 @@ type Confirmed = {
   price: string;
 };
 
+const MAX_PHOTOS = 4;
+
 export default function CustomizePage() {
   const [step, setStep] = useState(1);
   const [material, setMaterial] = useState(MATERIAL_OPTIONS[0]);
@@ -71,7 +76,35 @@ export default function CustomizePage() {
   const [selected, setSelected] = useState(0);
   const [palette, setPalette] = useState(0);
   const [embroidery, setEmbroidery] = useState("Biscuit");
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
+
+  async function handleFiles(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const slotsLeft = MAX_PHOTOS - photos.length;
+      const toProcess = Array.from(fileList).slice(0, slotsLeft);
+      const compressed = await Promise.all(
+        toProcess.map((f) => fileToCompressedDataUrl(f)),
+      );
+      setPhotos((prev) => [...prev, ...compressed]);
+      if (fileList.length > slotsLeft) {
+        setUploadError(`Only ${MAX_PHOTOS} photos max — extras were skipped.`);
+      }
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : "Couldn't read that file",
+      );
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   function handleConfirm() {
     const { submission } = createSubmissionAndOrder({
@@ -80,6 +113,7 @@ export default function CustomizePage() {
       palette: palettes[palette].name,
       embroidery,
       price: products[selected].price,
+      photos,
     });
     setConfirmed({
       submissionId: submission.id,
@@ -155,18 +189,74 @@ export default function CustomizePage() {
                   <h2 className="font-display text-3xl tracking-wide text-ink">
                     Tell us about the clothes you&apos;d like to transform
                   </h2>
-                  <div className="rounded-[12px] border-2 border-dashed border-border bg-cream p-10 text-center space-y-3">
+                  <label
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add("border-brand");
+                    }}
+                    onDragLeave={(e) =>
+                      e.currentTarget.classList.remove("border-brand")
+                    }
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove("border-brand");
+                      handleFiles(e.dataTransfer.files);
+                    }}
+                    className="block cursor-pointer rounded-[12px] border-2 border-dashed border-border bg-cream p-10 text-center space-y-3 hover:border-brand transition-colors"
+                  >
                     <Upload className="size-10 mx-auto text-brand" />
                     <div className="font-semibold text-ink">
-                      Drop photos here or browse
+                      {uploading
+                        ? "Processing…"
+                        : "Drop photos here or click to browse"}
                     </div>
                     <p className="text-sm text-ink-muted">
-                      JPG or PNG up to 10 MB. Best results with natural lighting.
+                      JPG or PNG, up to {MAX_PHOTOS} photos. Best results with
+                      natural lighting.
                     </p>
-                    <Button size="md" variant="secondary">
-                      Browse files
-                    </Button>
-                  </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleFiles(e.target.files)}
+                    />
+                  </label>
+                  {uploadError && (
+                    <div className="text-sm text-brand">{uploadError}</div>
+                  )}
+                  {photos.length > 0 && (
+                    <div className="grid grid-cols-4 gap-3">
+                      {photos.map((src, i) => (
+                        <div
+                          key={i}
+                          className="relative aspect-square rounded-[8px] overflow-hidden border border-border group"
+                        >
+                          <Image
+                            src={src}
+                            alt={`Upload ${i + 1}`}
+                            fill
+                            unoptimized
+                            className="object-cover"
+                            sizes="160px"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPhotos((p) =>
+                                p.filter((_, idx) => idx !== i),
+                              )
+                            }
+                            className="absolute top-1 right-1 size-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                            aria-label="Remove photo"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="space-y-1">
                     <div className="text-xs text-ink-muted uppercase tracking-wide">
                       Material
@@ -334,7 +424,20 @@ export default function CustomizePage() {
                     Preview & Checkout
                   </h2>
                   <div className="grid md:grid-cols-2 gap-6">
-                    <CheckerBox className="aspect-square w-full" />
+                    {photos[0] ? (
+                      <div className="relative aspect-square w-full rounded-[12px] overflow-hidden border border-border">
+                        <Image
+                          src={photos[0]}
+                          alt="Your material"
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          sizes="400px"
+                        />
+                      </div>
+                    ) : (
+                      <CheckerBox className="aspect-square w-full" />
+                    )}
                     <div className="space-y-3 text-sm">
                       <Line k="Product" v={products[selected].title} />
                       <Line k="Palette" v={palettes[palette].name} />

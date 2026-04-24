@@ -31,6 +31,7 @@ export type Submission = {
   material: string;
   submittedAt: number;
   stage: SubmissionStage;
+  photos?: string[];
 };
 
 export type Order = {
@@ -145,6 +146,7 @@ export function createSubmissionAndOrder(input: {
   palette: string;
   embroidery: string;
   price: string;
+  photos?: string[];
 }): { submission: Submission; order: Order } {
   const state = read();
   const submissionId = nextSubmissionId(state.submissions);
@@ -154,6 +156,7 @@ export function createSubmissionAndOrder(input: {
     material: input.material,
     submittedAt: Date.now(),
     stage: "submitted",
+    photos: input.photos,
   };
   const order: Order = {
     id: `ord_${Date.now().toString(36)}`,
