@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const links = [
@@ -12,8 +13,14 @@ export function Nav() {
     <header className="sticky top-0 z-40 bg-card border-b border-border h-[72px] flex items-center px-6 md:px-16">
       <div className="flex-1 flex items-center justify-between max-w-[1440px] mx-auto w-full">
         <Link href="/" className="flex items-center gap-2">
-          <span className="size-8 rounded-full bg-brand ring-2 ring-brand/20 flex items-center justify-center text-card text-xs font-bold">
-            P
+          <span className="relative size-9 rounded-full overflow-hidden ring-2 ring-brand/20 bg-cream">
+            <Image
+              src="/pawcycle-hero.png"
+              alt="PawCycle logo"
+              fill
+              sizes="36px"
+              className="object-contain"
+            />
           </span>
           <span className="font-display text-2xl tracking-wide text-brand">
             PawCycle
