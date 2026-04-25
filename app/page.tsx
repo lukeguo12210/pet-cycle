@@ -1,4 +1,5 @@
-import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
+import Image from "next/image";
+import { Button, Card, SectionTag } from "@/components/ui";
 import { ArrowRight, Leaf, Recycle, Sparkles } from "lucide-react";
 
 const steps = [
@@ -88,7 +89,16 @@ export default function Home() {
               </span>
             </div>
           </div>
-          <CheckerBox className="aspect-[5/4] w-full" />
+          <div className="relative aspect-[5/4] w-full rounded-[12px] overflow-hidden bg-cream">
+            <Image
+              src="/pawcycle-hero.png"
+              alt="PawCycle — From baby clothes to pet treats"
+              fill
+              priority
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-contain"
+            />
+          </div>
         </div>
       </section>
 
