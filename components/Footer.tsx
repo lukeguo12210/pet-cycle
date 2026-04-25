@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const footerCols = [
@@ -33,8 +34,14 @@ export function Footer() {
       <div className="max-w-[1440px] mx-auto px-6 md:px-20 py-14 grid md:grid-cols-4 gap-10">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="size-8 rounded-full bg-white/15 flex items-center justify-center text-white text-xs font-bold">
-              P
+            <span className="relative size-9 rounded-full overflow-hidden bg-cream">
+              <Image
+                src="/pawcycle-hero.png"
+                alt="PawCycle logo"
+                fill
+                sizes="36px"
+                className="object-contain"
+              />
             </span>
             <span className="font-display text-2xl tracking-wide">
               PawCycle
