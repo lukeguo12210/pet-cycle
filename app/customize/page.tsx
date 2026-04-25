@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
+import { Button, Card, SectionTag } from "@/components/ui";
 import {
   Upload,
   PawPrint,
@@ -37,16 +37,19 @@ const products = [
     title: "Memory Keepsake Bandana",
     body: "Soft-touch textile, embroidered with your pet's initials.",
     price: "$0 · included",
+    image: "/shop/generated-1776204633290.png",
   },
   {
     title: "Comfort Cat Bed",
     body: "Plush, thick layer. Shipped rolled for safe delivery.",
     price: "$12 craft fee",
+    image: "/shop/generated-1776209817856.png",
   },
   {
     title: "Heritage Dog Collar",
     body: "Hand-stitched and weather-treated for daily walks.",
     price: "$18 craft fee",
+    image: "/shop/generated-1776209580536.png",
   },
 ];
 
@@ -72,10 +75,10 @@ const MAX_PHOTOS = 4;
 export default function CustomizePage() {
   const [step, setStep] = useState(1);
   const [material, setMaterial] = useState(MATERIAL_OPTIONS[0]);
-  const [petName, setPetName] = useState("Biscuit");
+  const [petName, setPetName] = useState("");
   const [selected, setSelected] = useState(0);
   const [palette, setPalette] = useState(0);
-  const [embroidery, setEmbroidery] = useState("Biscuit");
+  const [embroidery, setEmbroidery] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -111,7 +114,7 @@ export default function CustomizePage() {
       material,
       product: products[selected].title,
       palette: palettes[palette].name,
-      embroidery,
+      embroidery: embroidery || "None",
       price: products[selected].price,
       photos,
     });
@@ -350,7 +353,15 @@ export default function CustomizePage() {
                             : "border-border"
                         } bg-cream`}
                       >
-                        <CheckerBox className="aspect-[4/3] w-full rounded-none" />
+                        <div className="relative aspect-[4/3] w-full overflow-hidden bg-card">
+                          <Image
+                            src={p.image}
+                            alt={p.title}
+                            fill
+                            sizes="(min-width: 768px) 28vw, 90vw"
+                            className="object-cover"
+                          />
+                        </div>
                         <div className="p-4 space-y-2">
                           <div className="font-semibold text-ink">
                             {p.title}
@@ -404,6 +415,7 @@ export default function CustomizePage() {
                     <input
                       value={embroidery}
                       onChange={(e) => setEmbroidery(e.target.value)}
+                      placeholder={petName || "Biscuit"}
                       className="w-full rounded-[8px] border border-border px-4 py-3 bg-cream focus:outline-none focus:border-brand"
                     />
                   </div>
@@ -436,12 +448,20 @@ export default function CustomizePage() {
                         />
                       </div>
                     ) : (
-                      <CheckerBox className="aspect-square w-full" />
+                      <div className="relative aspect-square w-full overflow-hidden rounded-[12px] border border-border bg-card">
+                        <Image
+                          src={products[selected].image}
+                          alt={products[selected].title}
+                          fill
+                          sizes="400px"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     <div className="space-y-3 text-sm">
                       <Line k="Product" v={products[selected].title} />
                       <Line k="Palette" v={palettes[palette].name} />
-                      <Line k="Embroidery" v={embroidery || "—"} />
+                      <Line k="Embroidery" v={embroidery || "None"} />
                       <Line k="Material" v={`Your donated ${material}`} />
                       <div className="pt-4 border-t border-border" />
                       <Line k="Craft fee" v={products[selected].price} />
@@ -449,7 +469,7 @@ export default function CustomizePage() {
                       <div className="flex items-center justify-between pt-3">
                         <span className="font-semibold text-ink">Total</span>
                         <span className="font-display text-2xl text-brand">
-                          $0.00
+                          {totalFor(products[selected].price)}
                         </span>
                       </div>
                     </div>
@@ -532,4 +552,10 @@ function Line({ k, v }: { k: string; v: string }) {
       <span className="font-medium text-ink text-right">{v}</span>
     </div>
   );
+}
+
+function totalFor(price: string) {
+  if (price.includes("$0")) return "$0.00";
+  const match = price.match(/\$(\d+)/);
+  return match ? `$${match[1]}.00` : price;
 }

@@ -70,7 +70,7 @@ export default function RecyclePage() {
             </Button>
             <Button
               size="lg"
-              href="/how-it-works"
+              href="/shop"
               className="bg-white/10 hover:bg-white/20 text-white"
             >
               Learn the Process

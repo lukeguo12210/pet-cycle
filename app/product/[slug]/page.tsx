@@ -1,179 +1,264 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
-import { Sparkles, CheckCircle2 } from "lucide-react";
+import { Button, Card } from "@/components/ui";
+import {
+  CheckCircle2,
+  Heart,
+  Leaf,
+  Minus,
+  Package,
+  Plus,
+  Scissors,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Truck,
+} from "lucide-react";
+import { detailImages, getProductBySlug, shopProducts } from "@/lib/catalog";
+import clsx from "clsx";
 
 const journey = [
-  { label: "Donation Received", done: true },
-  { label: "Sorted & Assessed", done: true },
-  { label: "Cleaned & Prepped", done: true },
-  { label: "Crafted by Artisans", done: false, active: true },
-  { label: "Ready to Ship", done: false },
+  { label: "Collected", icon: Package, tone: "done" },
+  { label: "Cleaned", icon: Sparkles, tone: "done" },
+  { label: "AI Sorted", icon: CheckCircle2, tone: "done" },
+  { label: "Crafted", icon: Scissors, tone: "active" },
+  { label: "Delivered", icon: Truck, tone: "todo" },
 ];
 
-export default function ProductPage({
+const safety = [
+  "Cleaned and sanitized",
+  "Non-toxic dyes and threads",
+  "Pet-safe finishing checks",
+];
+
+export function generateStaticParams() {
+  return shopProducts.map((product) => ({ slug: product.slug }));
+}
+
+export default async function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  void params;
+  const { slug } = await params;
+  const product = getProductBySlug(slug);
+  const gallery =
+    product.slug === "cotton-baby-bandana"
+      ? detailImages
+      : [product.image, ...detailImages.slice(1)];
+
   return (
     <>
-      <section className="bg-cream border-b border-border">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-16 py-3 text-xs text-ink-muted flex gap-2">
-          <Link href="/" className="hover:text-brand">
-            Home
+      <section className="border-b border-border bg-cream">
+        <div className="mx-auto flex h-12 max-w-[1440px] items-center gap-2 px-6 text-sm text-ink-muted md:px-16">
+          <Link href="/shop" className="text-brand hover:underline">
+            Shop
           </Link>
           <span>/</span>
-          <Link href="/account" className="hover:text-brand">
-            Closet
-          </Link>
+          <span className="text-brand">{product.category}</span>
           <span>/</span>
-          <span className="text-ink">Memory Keepsake</span>
-        </div>
-      </section>
-
-      <section className="bg-brand text-white">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-16 py-3 text-sm text-white/90 flex items-center gap-2">
-          <Sparkles className="size-4" />
-          This is a personalised item made from your donated Baby Blanket — it
-          cannot be returned.
+          <span className="font-semibold text-ink">{product.name}</span>
         </div>
       </section>
 
       <section className="bg-cream">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-16 py-14 grid md:grid-cols-[1fr_1.1fr] gap-10">
-          <div className="space-y-4">
-            <CheckerBox className="aspect-square w-full" />
-            <div className="grid grid-cols-4 gap-3">
-              {["bg-brand", "bg-[#F4E0A8]", "bg-[#E9C9A4]", "bg-[#D8B89B]"].map(
-                (c, i) => (
-                  <div key={i} className={`aspect-square rounded-[8px] ${c}`} />
-                ),
-              )}
+        <div className="mx-auto grid max-w-[1440px] gap-10 px-6 py-8 md:px-16 lg:grid-cols-[560px_1fr] lg:gap-12">
+          <div className="space-y-3">
+            <div className="relative aspect-square overflow-hidden rounded-[12px] bg-card">
+              <Image
+                src={gallery[0]}
+                alt={product.name}
+                fill
+                priority
+                sizes="(min-width: 1024px) 560px, 90vw"
+                className="object-cover"
+              />
             </div>
-            <div className="text-xs text-ink-muted flex items-center gap-1.5">
-              <Sparkles className="size-3" /> Personalised — Non-returnable
+            <div className="grid grid-cols-4 gap-2">
+              {gallery.map((src, index) => (
+                <div
+                  key={src}
+                  className={clsx(
+                    "relative aspect-square overflow-hidden rounded-[8px] border bg-card",
+                    index === 0 ? "border-2 border-brand" : "border-border",
+                  )}
+                >
+                  <Image
+                    src={src}
+                    alt={`${product.name} view ${index + 1}`}
+                    fill
+                    sizes="140px"
+                    className="object-cover"
+                  />
+                </div>
+              ))}
             </div>
+            <span className="inline-flex rounded-full bg-[#FFE0CC] px-3.5 py-1.5 text-xs font-semibold text-brand">
+              {product.tag}
+            </span>
           </div>
 
           <div className="space-y-5">
-            <span className="inline-block text-xs font-semibold tracking-wide uppercase bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
-              🎁 Custom Made For You
-            </span>
-            <h1 className="font-display text-5xl md:text-6xl tracking-wide text-ink">
-              Memory Keepsake Bandana
-            </h1>
-            <p className="text-ink-muted">
-              Crafted from: Baby Blanket (submitted Nov 13)
-            </p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="font-display text-4xl text-brand">$0.00</span>
-              <span className="text-ink-muted">
-                Included in your submission
-              </span>
+            <div>
+              <h1 className="font-display text-5xl tracking-wide text-ink md:text-6xl">
+                {product.name}
+              </h1>
+              <div className="mt-3 text-2xl font-bold text-brand">
+                {product.price}
+              </div>
             </div>
 
-            <Card className="p-5 space-y-3 bg-[#FCF5EB]">
-              <div className="text-sm font-semibold text-ink">
-                Personalisation Details
+            <Card className="bg-[#FFF4EC] p-4">
+              <div className="space-y-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-brand">
+                  The Story Behind This Product
+                </div>
+                <p className="text-sm leading-relaxed text-ink-muted">
+                  {product.story}
+                </p>
               </div>
-              <Detail k="Name Embroidery" v="Rose" />
-              <Detail k="Colour Choice" v="Warm Blush" />
-              <Detail k="Size" v="Medium" />
             </Card>
 
-            <Card className="p-5 bg-cream">
-              <div className="flex items-start gap-3">
-                <span className="size-9 rounded-full bg-brand text-white flex items-center justify-center font-semibold text-sm">
-                  SM
-                </span>
-                <div>
-                  <p className="italic text-ink-muted leading-relaxed">
-                    &ldquo;They recreated my baby girl&apos;s first home. I have
-                    another little one and gets to carry it home on the first
-                    night.&rdquo;
-                  </p>
-                  <div className="text-xs text-ink-muted mt-1">
-                    Sarah M. · Received January 5, 2026
-                  </div>
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-ink">Select Size</div>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((size, index) => {
+                  const disabled = product.disabledSizes?.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      disabled={disabled}
+                      className={clsx(
+                        "min-w-14 rounded-[8px] border px-5 py-2 text-sm font-medium disabled:cursor-not-allowed",
+                        disabled
+                          ? "border-border bg-[#DDDDDD] text-ink-muted"
+                          : index === 0
+                            ? "border-2 border-brand bg-card text-brand"
+                            : "border-border bg-card text-ink hover:border-brand",
+                      )}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-ink">Quantity</div>
+              <div className="inline-flex overflow-hidden rounded-[8px] border border-border bg-card">
+                <button className="flex size-10 items-center justify-center text-ink-muted">
+                  <Minus className="size-4" />
+                </button>
+                <div className="flex h-10 w-12 items-center justify-center border-x border-border text-sm font-semibold">
+                  1
+                </div>
+                <button className="flex size-10 items-center justify-center text-ink-muted">
+                  <Plus className="size-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <Button size="lg" className="justify-center rounded-[8px]">
+                <ShoppingBag className="size-4" /> Add to Cart
+              </Button>
+              <button
+                type="button"
+                aria-label="Save to wishlist"
+                title="Save to wishlist"
+                className="flex h-12 items-center justify-center rounded-[8px] border border-border bg-card px-4 text-brand hover:border-brand"
+              >
+                <Heart className="size-5" />
+              </button>
+            </div>
+
+            <Card className="border-[#C8E6C9] bg-[#F0F7F1] p-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+                  <ShieldCheck className="size-4 text-success" />
+                  Safety Assurance
+                </div>
+                <div className="space-y-2">
+                  {safety.map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-2 text-sm text-ink-muted"
+                    >
+                      <CheckCircle2 className="size-4 text-success" />
+                      {item}
+                    </div>
+                  ))}
                 </div>
               </div>
             </Card>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button size="lg" className="justify-center">
-                Approve Design
-              </Button>
-              <Button size="lg" variant="secondary" className="justify-center">
-                Request Changes
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-ink-muted">
-                <span>Production timeline</span>
-                <span>Shipping Apr 10</span>
-              </div>
-              <div className="h-2 rounded-full bg-[#F4E5D1] overflow-hidden">
-                <div className="h-full bg-[#4A7A3A] w-[68%]" />
-              </div>
-              <div className="flex items-center gap-2 text-xs text-success">
-                <CheckCircle2 className="size-4" />
-                This keepsake saved your Baby Blanket from landfill.
-              </div>
+            <div className="flex items-center gap-2 rounded-[8px] border border-border bg-cream px-3.5 py-2.5 text-sm text-ink">
+              <Leaf className="size-4 text-success" />
+              This product saved {product.savedGrams}g of textile from
+              landfill.
             </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-card border-t border-border">
-        <div className="max-w-[1200px] mx-auto px-6 md:px-16 py-12 space-y-6">
-          <SectionTag>Material journey</SectionTag>
-          <h2 className="font-display text-3xl md:text-4xl tracking-wide text-ink">
-            The Material Journey
-          </h2>
-          <div className="flex items-center">
-            {journey.map((step, i) => (
-              <div key={step.label} className="flex-1 flex items-center last:flex-none">
-                <div className="flex flex-col items-center gap-2 min-w-[80px]">
+      <section className="bg-card">
+        <div className="mx-auto max-w-[1440px] space-y-6 px-6 py-10 md:px-16">
+          <div>
+            <h2 className="font-display text-3xl tracking-wide text-ink">
+              The Material Journey
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              From your closet to your pet - every step matters.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="flex min-w-[720px] items-center">
+              {journey.map((step, index) => {
+                const active = step.tone !== "todo";
+                const completeLine = index < 3;
+                return (
                   <div
-                    className={`size-5 rounded-full border-2 ${
-                      step.done
-                        ? "bg-brand border-brand"
-                        : step.active
-                          ? "border-brand bg-brand/20"
-                          : "bg-cream border-border"
-                    }`}
-                  />
-                  <div
-                    className={`text-[11px] text-center tracking-wide ${
-                      step.done || step.active ? "text-ink" : "text-ink-muted"
-                    }`}
+                    key={step.label}
+                    className="flex flex-1 items-center last:flex-none"
                   >
-                    {step.label}
+                    <div className="flex min-w-24 flex-col items-center gap-2">
+                      <div
+                        className={clsx(
+                          "flex size-10 items-center justify-center rounded-full border-2",
+                          step.tone === "done"
+                            ? "border-brand bg-brand text-white"
+                            : step.tone === "active"
+                              ? "border-success bg-success text-white"
+                              : "border-border bg-card text-ink-muted",
+                        )}
+                      >
+                        <step.icon className="size-4" />
+                      </div>
+                      <div
+                        className={clsx(
+                          "text-sm font-semibold",
+                          active ? "text-ink" : "text-ink-muted",
+                        )}
+                      >
+                        {step.label}
+                      </div>
+                    </div>
+                    {index !== journey.length - 1 && (
+                      <div
+                        className={clsx(
+                          "mx-3 h-0.5 flex-1 rounded-full",
+                          completeLine ? "bg-brand" : "bg-border",
+                        )}
+                      />
+                    )}
                   </div>
-                </div>
-                {i !== journey.length - 1 && (
-                  <div
-                    className={`h-[3px] flex-1 rounded-full mx-2 ${
-                      step.done ? "bg-brand" : "bg-border"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
     </>
-  );
-}
-
-function Detail({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-ink-muted">{k}</span>
-      <span className="font-medium text-ink">{v}</span>
-    </div>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { Button, Card } from "@/components/ui";
+import { LoadingShell } from "@/components/LoadingShell";
 import { CheckCircle2 } from "lucide-react";
 import {
   STAGE_LABEL,
@@ -8,6 +11,7 @@ import {
   formatDate,
   stageIndex,
   useStore,
+  useStoreHydrated,
 } from "@/lib/store";
 
 const STATUS_TONE: Record<string, string> = {
@@ -18,8 +22,20 @@ const STATUS_TONE: Record<string, string> = {
   shipped: "bg-success-soft text-success",
 };
 
+const fallbackImages = [
+  "/shop/generated-1776205086002.png",
+  "/shop/generated-1776205099693.png",
+  "/shop/generated-1776205118514.png",
+];
+
 export default function TrackingPage() {
+  const hydrated = useStoreHydrated();
   const { submissions } = useStore();
+
+  if (!hydrated) {
+    return <LoadingShell />;
+  }
+
   const active = submissions.filter((s) => s.stage !== "shipped");
   const past = submissions.filter((s) => s.stage === "shipped");
 
@@ -50,9 +66,9 @@ export default function TrackingPage() {
           {active.length === 0 ? (
             <Card className="p-10 text-center text-ink-muted">
               Nothing in-flight. Start a new submission from{" "}
-              <a href="/customize" className="text-brand hover:underline">
+              <Link href="/customize" className="text-brand hover:underline">
                 Customize
-              </a>
+              </Link>
               .
             </Card>
           ) : (
@@ -101,28 +117,42 @@ export default function TrackingPage() {
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 gap-4">
-              {past.map((p) => (
-                <Card
-                  key={p.id}
-                  className="p-5 flex items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="size-12 rounded-[8px] bg-[#E9C9A4] checker-pattern" />
-                    <div>
-                      <div className="text-sm text-brand font-semibold">
-                        {p.id}
+              {past.map((p, index) => {
+                const src =
+                  p.photos?.[0] ??
+                  fallbackImages[index % fallbackImages.length];
+                return (
+                  <Card
+                    key={p.id}
+                    className="p-5 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative size-12 shrink-0 overflow-hidden rounded-[8px] bg-card">
+                        <Image
+                          src={src}
+                          alt={p.item}
+                          fill
+                          unoptimized={src.startsWith("data:")}
+                          sizes="48px"
+                          className="object-cover"
+                        />
                       </div>
-                      <div className="font-semibold text-ink">{p.item}</div>
-                      <div className="text-xs text-ink-muted">
-                        {formatDate(p.submittedAt)}
+                      <div>
+                        <div className="text-sm text-brand font-semibold">
+                          {p.id}
+                        </div>
+                        <div className="font-semibold text-ink">{p.item}</div>
+                        <div className="text-xs text-ink-muted">
+                          {formatDate(p.submittedAt)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <span className="text-xs text-success bg-success-soft px-3 py-1 rounded-full font-medium flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5" /> Delivered
-                  </span>
-                </Card>
-              ))}
+                    <span className="text-xs text-success bg-success-soft px-3 py-1 rounded-full font-medium flex items-center gap-1">
+                      <CheckCircle2 className="size-3.5" /> Delivered
+                    </span>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

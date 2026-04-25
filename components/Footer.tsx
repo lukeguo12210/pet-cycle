@@ -7,7 +7,8 @@ const footerCols = [
     links: [
       { href: "/how-it-works", label: "How It Works" },
       { href: "/recycle", label: "Recycle" },
-      { href: "/impact", label: "Impact" },
+      { href: "/recycle#submit", label: "Drop-off Locations" },
+      { href: "/shop", label: "Pet Products" },
     ],
   },
   {
@@ -22,6 +23,7 @@ const footerCols = [
     title: "Company",
     links: [
       { href: "/impact", label: "Our Story" },
+      { href: "/impact", label: "Sustainability" },
       { href: "#", label: "Press" },
       { href: "#", label: "Contact" },
     ],

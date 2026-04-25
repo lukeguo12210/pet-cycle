@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button, Card, SectionTag } from "@/components/ui";
 import { ArrowRight, Leaf, Recycle, Sparkles } from "lucide-react";
 
@@ -21,10 +22,26 @@ const steps = [
 ];
 
 const collection = [
-  { name: "Heritage Dog Collar", from: "From a wool scarf", tone: "bg-[#E9C9A4]" },
-  { name: "Memory Cat Bed", from: "From a baby blanket", tone: "bg-[#F4E0A8]" },
-  { name: "Bandana No.37", from: "From a T-shirt set", tone: "bg-[#F3B8B8]" },
-  { name: "Keepsake Quilt", from: "From a denim jacket", tone: "bg-[#9DB8DF]" },
+  {
+    name: "Heritage Dog Collar",
+    from: "From a wool scarf",
+    image: "/shop/generated-1776209580536.png",
+  },
+  {
+    name: "Memory Cat Bed",
+    from: "From a baby blanket",
+    image: "/shop/generated-1776209817856.png",
+  },
+  {
+    name: "Bandana No.37",
+    from: "From a T-shirt set",
+    image: "/shop/generated-1776204549455.png",
+  },
+  {
+    name: "Keepsake Quilt",
+    from: "From a denim jacket",
+    image: "/shop/generated-1776209730635.png",
+  },
 ];
 
 const counters = [
@@ -143,22 +160,28 @@ export default function Home() {
                 Shop the Collection
               </h2>
             </div>
-            <a
-              href="/product/memory-keepsake-bandana"
+            <Link
+              href="/shop"
               className="text-sm text-brand hover:underline flex items-center gap-1"
             >
               View all <ArrowRight className="size-4" />
-            </a>
+            </Link>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {collection.map((p) => (
-              <a
+              <Link
                 key={p.name}
-                href="/product/memory-keepsake-bandana"
+                href="/product/cotton-baby-bandana"
                 className="group block"
               >
-                <div className={`aspect-square rounded-[12px] ${p.tone} relative overflow-hidden`}>
-                  <div className="checker-pattern absolute inset-0 opacity-20" />
+                <div className="relative aspect-square overflow-hidden rounded-[12px] bg-card">
+                  <Image
+                    src={p.image}
+                    alt={p.name}
+                    fill
+                    sizes="(min-width: 1024px) 22vw, 45vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
                 </div>
                 <div className="pt-3 space-y-1">
                   <div className="text-xs uppercase tracking-wide text-ink-muted">
@@ -168,7 +191,7 @@ export default function Home() {
                     {p.name}
                   </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

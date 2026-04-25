@@ -2,8 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const links = [
+  { href: "/", label: "Home" },
   { href: "/recycle", label: "Recycle" },
-  { href: "/how-it-works", label: "How It Works" },
+  { href: "/shop", label: "Shop" },
   { href: "/impact", label: "Impact" },
   { href: "/account", label: "Account" },
 ];

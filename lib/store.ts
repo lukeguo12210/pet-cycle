@@ -51,51 +51,11 @@ type StoreState = {
   orders: Order[];
 };
 
-const STORAGE_KEY = "pawcycle:store:v1";
-const SEED: StoreState = {
-  submissions: [
-    {
-      id: "#0234",
-      item: "Baby Blanket - 2 items",
-      material: "Baby Blanket",
-      submittedAt: new Date("2026-03-15").getTime(),
-      stage: "ai",
-    },
-    {
-      id: "#0198",
-      item: "Cotton T-Shirt - 1 item",
-      material: "Cotton T-Shirt",
-      submittedAt: new Date("2026-03-08").getTime(),
-      stage: "production",
-    },
-    {
-      id: "#0156",
-      item: "Denim Jacket",
-      material: "Denim Jacket",
-      submittedAt: new Date("2026-02-20").getTime(),
-      stage: "shipped",
-    },
-    {
-      id: "#0102",
-      item: "Kids Sweater",
-      material: "Kids Sweater",
-      submittedAt: new Date("2026-01-30").getTime(),
-      stage: "shipped",
-    },
-  ],
-  orders: [
-    {
-      id: "ord_0001",
-      submissionId: "#0234",
-      product: "Memory Keepsake Bandana",
-      material: "Baby Blanket",
-      palette: "Warm Blush",
-      embroidery: "Rose",
-      price: "$0 · included",
-      createdAt: new Date("2026-03-15").getTime(),
-      status: "in_production",
-    },
-  ],
+const STORAGE_KEY = "pawcycle:store:v2";
+const LEGACY_STORAGE_KEYS = ["pawcycle:store:v1"];
+const EMPTY_STATE: StoreState = {
+  submissions: [],
+  orders: [],
 };
 
 let cached: StoreState | null = null;
@@ -103,12 +63,12 @@ const subscribers = new Set<() => void>();
 
 function read(): StoreState {
   if (cached) return cached;
-  if (typeof window === "undefined") return SEED;
+  if (typeof window === "undefined") return EMPTY_STATE;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    cached = raw ? (JSON.parse(raw) as StoreState) : SEED;
+    cached = raw ? (JSON.parse(raw) as StoreState) : EMPTY_STATE;
   } catch {
-    cached = SEED;
+    cached = EMPTY_STATE;
   }
   return cached;
 }
@@ -129,7 +89,15 @@ function subscribe(fn: () => void) {
 }
 
 export function useStore(): StoreState {
-  return useSyncExternalStore(subscribe, read, () => SEED);
+  return useSyncExternalStore(subscribe, read, () => EMPTY_STATE);
+}
+
+export function useStoreHydrated(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 }
 
 function nextSubmissionId(subs: Submission[]): string {
@@ -177,7 +145,12 @@ export function createSubmissionAndOrder(input: {
 }
 
 export function resetStore() {
-  write(SEED);
+  cached = EMPTY_STATE;
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(STORAGE_KEY);
+    LEGACY_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
+  }
+  subscribers.forEach((fn) => fn());
 }
 
 export function formatDate(ts: number): string {

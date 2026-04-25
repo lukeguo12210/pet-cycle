@@ -1,362 +1,425 @@
 "use client";
 
-import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
-import { Plus, Bell, RotateCcw } from "lucide-react";
-import Link from "next/link";
-import { formatDate, resetStore, useStore } from "@/lib/store";
+import Image from "next/image";
+import { Button, Card } from "@/components/ui";
+import { LoadingShell } from "@/components/LoadingShell";
+import {
+  Bell,
+  CheckCircle2,
+  Cpu,
+  Heart,
+  LayoutDashboard,
+  MapPin,
+  Package,
+  Plus,
+  RotateCcw,
+  Settings,
+  ShoppingBag,
+  Truck,
+} from "lucide-react";
+import {
+  STAGE_LABEL,
+  STAGE_ORDER,
+  formatDate,
+  resetStore,
+  stageIndex,
+  useStore,
+  useStoreHydrated,
+  type SubmissionStage,
+} from "@/lib/store";
+import clsx from "clsx";
 
-const notif = [
-  { t: "Submission Updates", d: "Get notified as your item is reviewed.", on: true },
-  { t: "Order Shipped", d: "Receive shipping and delivery updates.", on: true },
-  { t: "New Products Available", d: "Alerts when new upcycled items are listed.", on: false },
-  { t: "Marketing & Promotions", d: "Deals, discounts, and seasonal campaigns.", on: false },
+const sidebarItems = [
+  { label: "Overview", icon: LayoutDashboard, active: true },
+  { label: "My Submissions", icon: Package },
+  { label: "My Orders", icon: ShoppingBag },
+  { label: "Tracking", icon: MapPin },
+  { label: "Saved Items", icon: Heart },
+  { label: "Settings", icon: Settings },
 ];
 
-const saved = [
-  { name: "Memory Keepsake", from: "$24", accent: "bg-[#E9C9A4]" },
-  { name: "Pet Pattern Kit", from: "From $35", accent: "bg-[#F4E0A8]" },
-  { name: "Denim Dog Bed", from: "From $89", accent: "bg-[#9DB8DF]" },
-  { name: "Wool Cat Cave", from: "$54", accent: "bg-[#D8B89B]" },
+const submissionImages = [
+  "/shop/generated-1776205086002.png",
+  "/shop/generated-1776205099693.png",
+  "/shop/generated-1776205118514.png",
 ];
 
-const STATUS_TONE: Record<string, { label: string; tone: string }> = {
-  submitted: { label: "Submitted", tone: "bg-border text-ink" },
-  received: { label: "Received", tone: "bg-sky-100 text-sky-800" },
-  ai: { label: "Under AI Review", tone: "bg-amber-100 text-amber-800" },
-  production: { label: "In Production", tone: "bg-sky-100 text-sky-800" },
-  shipped: { label: "Delivered", tone: "bg-success-soft text-success" },
+const STATUS_TONE: Record<SubmissionStage, string> = {
+  submitted: "bg-border text-ink",
+  received: "bg-sky-100 text-sky-800",
+  ai: "bg-amber-100 text-amber-800",
+  production: "bg-sky-100 text-sky-800",
+  shipped: "bg-success-soft text-success",
 };
 
-const ORDER_LABEL: Record<string, { label: string; cta: string; variant: "primary" | "outline" }> = {
-  in_production: { label: "In Production", cta: "Approve Design", variant: "primary" },
-  ready_to_ship: { label: "Ready to Ship", cta: "Ship It", variant: "primary" },
-  shipped: { label: "Shipped", cta: "Track", variant: "outline" },
-  delivered: { label: "Delivered", cta: "Reorder", variant: "outline" },
+const activityMeta: Record<
+  SubmissionStage,
+  { icon: typeof Package; dot: string; badge: string }
+> = {
+  submitted: {
+    icon: Package,
+    dot: "bg-brand-soft text-brand",
+    badge: "bg-border text-ink",
+  },
+  received: {
+    icon: Package,
+    dot: "bg-brand-soft text-brand",
+    badge: "bg-sky-100 text-sky-800",
+  },
+  ai: {
+    icon: Cpu,
+    dot: "bg-amber-100 text-amber-700",
+    badge: "bg-amber-100 text-amber-800",
+  },
+  production: {
+    icon: Cpu,
+    dot: "bg-sky-100 text-sky-700",
+    badge: "bg-sky-100 text-sky-800",
+  },
+  shipped: {
+    icon: Truck,
+    dot: "bg-success-soft text-success",
+    badge: "bg-success-soft text-success",
+  },
 };
 
 export default function AccountPage() {
+  const hydrated = useStoreHydrated();
   const { submissions, orders } = useStore();
+
+  if (!hydrated) {
+    return <LoadingShell />;
+  }
+
+  const activeOrders = orders.filter((order) => order.status !== "delivered");
   const textileSavedKg = (submissions.length * 0.2).toFixed(1);
-  const co2Kg = (submissions.length * 0.52).toFixed(2);
+  const featured =
+    submissions.find((submission) => submission.stage !== "shipped") ??
+    submissions[0];
+  const progress = featured ? Math.max(15, (stageIndex(featured.stage) + 1) * 20) : 0;
 
   return (
-    <>
-      <section className="bg-brand text-white">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 py-10 flex flex-wrap items-center justify-between gap-6">
-          <div>
-            <h1 className="font-display text-4xl md:text-5xl tracking-wide">
-              Sarah Chen
-            </h1>
-            <p className="text-white/80">
-              Member since Jan 2026 · Level 2 Recycler
-            </p>
-          </div>
-          <div className="flex gap-3 flex-wrap">
-            <Button variant="secondary" size="md">
-              Edit Profile
-            </Button>
-            <button
-              type="button"
-              aria-label="Notifications"
-              title="Notifications"
-              className="inline-flex items-center justify-center size-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-            >
-              <Bell className="size-5" />
-            </button>
-            <Button
-              size="md"
-              className="bg-white/10 hover:bg-white/20 text-white"
-              onClick={() => resetStore()}
-            >
-              <RotateCcw className="size-4" /> Reset demo data
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-cream">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 py-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { v: String(submissions.length), l: "Submissions" },
-            { v: String(orders.length), l: "Products Owned" },
-            { v: `${textileSavedKg} kg`, l: "Textile Saved" },
-            { v: `${co2Kg} kg`, l: "CO₂ Offset" },
-          ].map((s) => (
-            <Card key={s.l} className="p-5 text-center space-y-1">
-              <div className="font-display text-3xl tracking-wide text-brand">
-                {s.v}
+    <section className="bg-cream">
+      <div className="mx-auto grid max-w-[1440px] gap-0 lg:grid-cols-[260px_1fr]">
+        <aside className="border-b border-border bg-card lg:min-h-[calc(100vh-72px)] lg:border-b-0 lg:border-r">
+          <div className="sticky top-[72px] space-y-4 p-5">
+            <div className="flex flex-col items-center gap-2 px-4 py-5 text-center">
+              <div className="flex size-16 items-center justify-center rounded-full bg-brand text-2xl font-bold text-white">
+                S
               </div>
-              <div className="text-sm text-ink-muted">{s.l}</div>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-cream">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 pb-12 space-y-4">
-          <div className="flex items-end justify-between flex-wrap gap-2">
-            <h2 className="font-display text-3xl tracking-wide text-ink">
-              My Submissions
-            </h2>
-            <Button href="/customize" size="sm" variant="outline">
-              <Plus className="size-4" /> New Submission
-            </Button>
-          </div>
-          <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[640px]">
-                <thead className="bg-[#FCF5EB] text-ink-muted">
-                  <tr>
-                    <th className="text-left px-5 py-3 font-medium">
-                      Submission ID
-                    </th>
-                    <th className="text-left px-5 py-3 font-medium">Item</th>
-                    <th className="text-left px-5 py-3 font-medium">
-                      Submitted
-                    </th>
-                    <th className="text-left px-5 py-3 font-medium">Status</th>
-                    <th className="px-5 py-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {submissions.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-5 py-8 text-center text-ink-muted"
-                      >
-                        No submissions yet.{" "}
-                        <Link
-                          href="/customize"
-                          className="text-brand hover:underline"
-                        >
-                          Start one →
-                        </Link>
-                      </td>
-                    </tr>
-                  )}
-                  {submissions.map((s) => {
-                    const tone = STATUS_TONE[s.stage];
-                    return (
-                      <tr key={s.id} className="border-t border-border">
-                        <td className="px-5 py-4 font-semibold text-brand">
-                          {s.id}
-                        </td>
-                        <td className="px-5 py-4">{s.item}</td>
-                        <td className="px-5 py-4 text-ink-muted">
-                          {formatDate(s.submittedAt)}
-                        </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${tone.tone}`}
-                          >
-                            {tone.label}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-right">
-                          <Link
-                            href="/tracking"
-                            className="text-brand hover:underline font-medium"
-                          >
-                            View details
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-      </section>
-
-      <section className="bg-cream">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 pb-12 space-y-4">
-          <h2 className="font-display text-3xl tracking-wide text-ink">
-            My Orders
-          </h2>
-          {orders.length === 0 ? (
-            <Card className="p-10 text-center text-ink-muted">
-              No orders yet. Finish the customize flow to start one.
-            </Card>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-5">
-              {orders.map((o) => {
-                const meta = ORDER_LABEL[o.status];
-                return (
-                  <Card key={o.id} className="overflow-hidden">
-                    <CheckerBox className="aspect-[4/3] w-full rounded-none" />
-                    <div className="p-5 space-y-2">
-                      <div className="font-semibold text-ink">{o.product}</div>
-                      <div className="text-xs text-ink-muted">
-                        From {o.material} — {meta.label}
-                      </div>
-                      <Button
-                        href="/tracking"
-                        size="sm"
-                        variant={meta.variant}
-                        className="w-full justify-center mt-2"
-                      >
-                        {meta.cta}
-                      </Button>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="bg-cream">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 pb-12 space-y-4">
-          <h2 className="font-display text-3xl tracking-wide text-ink">
-            Saved Items
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {saved.map((s) => (
-              <Card key={s.name} className="overflow-hidden">
-                <div className={`aspect-square ${s.accent} relative`}>
-                  <div className="checker-pattern absolute inset-0 opacity-30" />
-                </div>
-                <div className="p-3 space-y-0.5">
-                  <div className="text-sm font-semibold text-ink">{s.name}</div>
-                  <div className="text-xs text-ink-muted">{s.from}</div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-cream">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-16 pb-20 space-y-4">
-          <h2 className="font-display text-3xl tracking-wide text-ink">
-            Account Settings
-          </h2>
-          <div className="grid md:grid-cols-2 gap-5">
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-ink">Profile Information</h3>
-                <button className="text-xs text-brand hover:underline">
-                  Edit
-                </button>
-              </div>
-              <div className="space-y-3 text-sm">
-                <Field label="Full Name" value="Sarah Chen" />
-                <Field label="Email Address" value="sarah@email.com" />
-                <Field label="Phone Number" value="+1 (555) 234-5678" />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button size="sm">Save Changes</Button>
-                <Button size="sm" variant="outline">
-                  Cancel
-                </Button>
-              </div>
-            </Card>
-            <Card className="p-6 space-y-4">
-              <h3 className="font-semibold text-ink flex items-center gap-2">
-                <Bell className="size-4 text-brand" /> Notifications
-              </h3>
-              <div className="space-y-4">
-                {notif.map((n) => (
-                  <div
-                    key={n.t}
-                    className="flex items-start justify-between gap-4"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-ink">{n.t}</div>
-                      <div className="text-xs text-ink-muted">{n.d}</div>
-                    </div>
-                    <div className="toggle-track" data-on={String(n.on)}>
-                      <span className="toggle-knob" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-          <div className="grid md:grid-cols-2 gap-5">
-            <Card className="p-6 space-y-3">
-              <h3 className="font-semibold text-ink">Security</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">Password</div>
-                  <div className="text-xs text-ink-muted">
-                    Last changed 2 months ago
-                  </div>
-                </div>
-                <Button size="sm" variant="outline">
-                  Change
-                </Button>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">
-                    Two-Factor Authentication
-                  </div>
-                  <div className="text-xs text-ink-muted">
-                    Add an extra layer of security
-                  </div>
-                </div>
-                <Button size="sm" variant="outline">
-                  Enable
-                </Button>
-              </div>
-            </Card>
-            <Card className="p-6 space-y-3">
-              <h3 className="font-semibold text-ink">Saved Addresses</h3>
-              <div className="rounded-[12px] border border-border p-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">
-                    123 Main Street, Brooklyn, NY 11201
-                  </div>
-                  <span className="text-xs text-success bg-success-soft px-2 py-0.5 rounded-full">
-                    Default
-                  </span>
-                </div>
-                <div className="text-ink-muted text-xs mt-1">
-                  Default shipping address
-                </div>
-              </div>
-              <Button size="sm" variant="outline">
-                <Plus className="size-4" /> Add Address
-              </Button>
-            </Card>
-          </div>
-          <Card className="p-6 border-brand/50 bg-brand-soft/40">
-            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h3 className="font-semibold text-brand">Danger Zone</h3>
+                <div className="font-semibold text-ink">Sarah Chen</div>
+                <div className="text-xs text-ink-muted">sarah@email.com</div>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-3">
+              <nav className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
+                {sidebarItems.map((item) => (
+                  <button
+                    key={item.label}
+                    className={clsx(
+                      "flex items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition-colors",
+                      item.active
+                        ? "bg-[#FFE0CC] font-semibold text-brand"
+                        : "text-ink-muted hover:bg-brand-soft hover:text-brand",
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </aside>
+
+        <div className="space-y-6 px-6 py-8 md:px-8">
+          <Card className="p-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="font-display text-3xl tracking-wide text-ink">
+                  Welcome back, Sarah
+                </h1>
                 <p className="text-sm text-ink-muted">
-                  Permanently remove your account and all data.
+                  Here&apos;s what&apos;s happening with your recycling journey.
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-brand text-brand hover:bg-brand hover:text-white"
-              >
-                Delete Account
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Notifications"
+                  title="Notifications"
+                  className="flex size-11 items-center justify-center rounded-full bg-brand-soft text-brand hover:bg-[#FFE0CC]"
+                >
+                  <Bell className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Clear local data"
+                  title="Clear local data"
+                  onClick={() => resetStore()}
+                  className="flex size-11 items-center justify-center rounded-full bg-brand-soft text-brand hover:bg-[#FFE0CC]"
+                >
+                  <RotateCcw className="size-5" />
+                </button>
+                <Button href="/customize" className="rounded-[8px]">
+                  <Plus className="size-4" /> Submit Clothes
+                </Button>
+              </div>
             </div>
           </Card>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <StatCard
+              value={String(submissions.length)}
+              label="Total Clothes Submitted"
+            />
+            <StatCard value={String(activeOrders.length)} label="Active Orders" />
+            <StatCard
+              value={`${textileSavedKg} kg`}
+              label="Textile Saved by You"
+              dark
+            />
+          </div>
+
+          <section className="space-y-4">
+            <h2 className="font-display text-xl tracking-wide text-ink">
+              Recent Activity
+            </h2>
+            <Card className="overflow-hidden">
+              {submissions.length === 0 ? (
+                <EmptyPanel
+                  title="No activity yet"
+                  body="Start a local submission and this timeline will update from your browser storage."
+                />
+              ) : (
+                submissions.slice(0, 3).map((submission, index) => {
+                  const meta = activityMeta[submission.stage];
+                  return (
+                    <div
+                      key={submission.id}
+                      className={clsx(
+                        "flex flex-wrap items-center gap-3 px-5 py-4",
+                        index !== Math.min(submissions.length, 3) - 1 &&
+                          "border-b border-[#F5F0E8]",
+                      )}
+                    >
+                      <span
+                        className={clsx(
+                          "flex size-9 shrink-0 items-center justify-center rounded-full",
+                          meta.dot,
+                        )}
+                      >
+                        <meta.icon className="size-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold text-ink">
+                          Submission {submission.id} -{" "}
+                          {STAGE_LABEL[submission.stage]}
+                        </div>
+                        <div className="text-xs text-ink-muted">
+                          Submitted {formatDate(submission.submittedAt)}
+                        </div>
+                      </div>
+                      <span
+                        className={clsx(
+                          "rounded-full px-2.5 py-1 text-xs font-semibold",
+                          meta.badge,
+                        )}
+                      >
+                        {STAGE_LABEL[submission.stage]}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </Card>
+          </section>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <section className="space-y-4">
+              <h2 className="font-display text-xl tracking-wide text-ink">
+                My Submissions
+              </h2>
+              <div className="space-y-3">
+                {submissions.length === 0 ? (
+                  <Card>
+                    <EmptyPanel
+                      title="No submissions"
+                      body="Upload a textile photo to create your first saved submission."
+                    />
+                  </Card>
+                ) : (
+                  submissions.slice(0, 3).map((submission, index) => {
+                    const src =
+                      submission.photos?.[0] ??
+                      submissionImages[index % submissionImages.length];
+                    return (
+                      <Card key={submission.id} className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative size-[60px] shrink-0 overflow-hidden rounded-[8px] bg-card">
+                            <Image
+                              src={src}
+                              alt={submission.item}
+                              fill
+                              unoptimized={src.startsWith("data:")}
+                              sizes="60px"
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs text-ink-muted">
+                              {submission.id} -{" "}
+                              {formatDate(submission.submittedAt)}
+                            </div>
+                            <div className="truncate text-sm font-semibold text-ink">
+                              {submission.item}
+                            </div>
+                            <span
+                              className={clsx(
+                                "mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
+                                STATUS_TONE[submission.stage],
+                              )}
+                            >
+                              {STAGE_LABEL[submission.stage]}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="font-display text-xl tracking-wide text-ink">
+                Live Tracking
+              </h2>
+              <Card className="p-5">
+                {featured ? (
+                  <div className="space-y-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="font-semibold text-ink">
+                          Submission {featured.id}
+                        </div>
+                        <div className="text-xs text-ink-muted">
+                          Est. Apr 18, 2026
+                        </div>
+                      </div>
+                      <Button href="/tracking" size="sm" variant="outline">
+                        View
+                      </Button>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-brand-soft">
+                      <div
+                        className="h-full rounded-full bg-brand"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      {STAGE_ORDER.map((stage, index) => {
+                        const activeIndex = stageIndex(featured.stage);
+                        const done = index <= activeIndex;
+                        return (
+                          <div
+                            key={stage}
+                            className="flex items-center gap-3 text-sm"
+                          >
+                            <span
+                              className={clsx(
+                                "flex size-5 items-center justify-center rounded-full border",
+                                done
+                                  ? "border-brand bg-brand text-white"
+                                  : "border-border bg-card text-ink-muted",
+                              )}
+                            >
+                              {done && <CheckCircle2 className="size-3.5" />}
+                            </span>
+                            <span
+                              className={done ? "font-medium text-ink" : "text-ink-muted"}
+                            >
+                              {STAGE_LABEL[stage]}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-sm text-ink-muted">
+                    No active submissions yet.
+                  </div>
+                )}
+              </Card>
+            </section>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Button href="/customize" size="lg" className="justify-center rounded-[8px]">
+              Submit More Clothes
+            </Button>
+            <Button
+              href="/shop"
+              size="lg"
+              variant="secondary"
+              className="justify-center rounded-[8px]"
+            >
+              Browse Shop
+            </Button>
+          </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function StatCard({
+  value,
+  label,
+  dark = false,
+}: {
+  value: string;
+  label: string;
+  dark?: boolean;
+}) {
   return (
-    <div className="space-y-1">
-      <div className="text-xs text-ink-muted uppercase tracking-wide">
-        {label}
-      </div>
-      <div className="rounded-[8px] border border-border px-3 py-2 bg-cream">
+    <Card
+      className={clsx(
+        "p-5",
+        dark && "border-0 bg-success text-white shadow-card",
+      )}
+    >
+      <div
+        className={clsx(
+          "font-display text-4xl tracking-wide",
+          dark ? "text-white" : "text-brand",
+        )}
+      >
         {value}
       </div>
+      <div className={clsx("text-sm", dark ? "text-success-soft" : "text-ink-muted")}>
+        {label}
+      </div>
+    </Card>
+  );
+}
+
+function EmptyPanel({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 px-5 py-10 text-center">
+      <div className="flex size-10 items-center justify-center rounded-full bg-brand-soft text-brand">
+        <Package className="size-5" />
+      </div>
+      <div>
+        <div className="font-semibold text-ink">{title}</div>
+        <p className="mt-1 max-w-sm text-sm text-ink-muted">{body}</p>
+      </div>
+      <Button href="/customize" size="sm" className="rounded-[8px]">
+        <Plus className="size-4" /> Start submission
+      </Button>
     </div>
   );
 }

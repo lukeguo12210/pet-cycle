@@ -1,4 +1,5 @@
-import { Button, Card, CheckerBox, SectionTag } from "@/components/ui";
+import Image from "next/image";
+import { Button, Card, SectionTag } from "@/components/ui";
 import { Leaf, Brain, ShieldCheck, Heart } from "lucide-react";
 
 const counters = [
@@ -13,16 +14,19 @@ const transformations = [
     tag: "Wool Scarf → Dog Collar",
     quote: "I know, it's from NYC.",
     body: "My grandma's scarf now lives on my corgi. Best walks ever.",
+    image: "/shop/generated-1776209580536.png",
   },
   {
     tag: "Jeans → Pet Bed",
     quote: "Jack from Portland",
     body: "Cat approved within 30 seconds. I can't take credit — she did.",
+    image: "/shop/generated-1776209730635.png",
   },
   {
     tag: "Wedding Dress → Cat Cave",
     quote: "Bride-to-Memo",
     body: "I didn't want a box in the attic — I wanted something Miso loves.",
+    image: "/shop/generated-1776209566692.png",
   },
 ];
 
@@ -97,7 +101,15 @@ export default function ImpactPage() {
             {transformations.map((t, i) => (
               <Card key={t.tag} className="overflow-hidden">
                 <div className="relative">
-                  <CheckerBox className="aspect-[4/3] w-full rounded-none" />
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-card">
+                    <Image
+                      src={t.image}
+                      alt={t.tag}
+                      fill
+                      sizes="(min-width: 768px) 30vw, 90vw"
+                      className="object-cover"
+                    />
+                  </div>
                   <span className="absolute top-3 left-3 text-xs font-semibold tracking-wide uppercase text-white bg-brand px-2.5 py-1 rounded-full">
                     {t.tag}
                   </span>
@@ -173,7 +185,7 @@ export default function ImpactPage() {
               Start Recycling
             </Button>
             <Button
-              href="/product/memory-keepsake-bandana"
+              href="/shop"
               size="lg"
               className="bg-white/10 hover:bg-white/20 text-white"
             >
