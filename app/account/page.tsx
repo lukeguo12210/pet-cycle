@@ -84,12 +84,14 @@ export default function AccountPage() {
             <Button variant="secondary" size="md">
               Edit Profile
             </Button>
-            <Button
-              size="md"
-              className="bg-white/10 hover:bg-white/20 text-white"
+            <button
+              type="button"
+              aria-label="Notifications"
+              title="Notifications"
+              className="inline-flex items-center justify-center size-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
             >
-              Notifications
-            </Button>
+              <Bell className="size-5" />
+            </button>
           </div>
         </div>
       </section>
